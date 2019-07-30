@@ -1,0 +1,8 @@
+tornado==4.5.3
+pandas==0.23.4
+jupyter==1.0.0
+matplotlib==2.2.3
+Pillow==5.3.0
+torch==0.4.1
+torchvision==0.2.1
+bokeh==0.12.6
