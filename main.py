@@ -52,15 +52,16 @@ def main(args):
     model = HAMNet(n_classes, model_name=args.backbone)
     model = model.to(device)
 
+    train_df = df.loc[df['image_id'].isin(train_ids)]
+    valid_df = df.loc[df['image_id'].isin(valid_ids)]
+
     train_dataset = HAMDataset(
-        train_ids,
-        df,
+        train_df,
         build_preprocess(model.mean, model.std),
         build_train_transform()
         )
     valid_dataset = HAMDataset(
-        valid_ids,
-        df,
+        valid_df,
         build_preprocess(model.mean, model.std),
         build_test_transform()
         )

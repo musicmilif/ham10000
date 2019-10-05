@@ -19,17 +19,15 @@ def get_image(img_path):
 
 
 class HAMDataset(Dataset):
-    def __init__(self, ids, df, preprocess=None, transforms=None):
-        self.ids = ids
+    def __init__(self, df, preprocess=None, transforms=None):
         self.df = df
         self.preprocess = preprocess
         self.transforms = transforms
     
     def __getitem__(self, idx):
-        id_ = self.ids[idx]
-        row = self.df.loc[self.df['image_id'] == id_]
-        img_path = row['path'].iloc[0]
-        y = row['target'].iloc[0]
+        img_path = self.df['path'].iloc[idx]
+        y = self.df['target'].iloc[idx]
+        id_ = self.df['image_id'].iloc[idx]
         img = get_image(img_path)
 
         if self.preprocess:
@@ -43,7 +41,7 @@ class HAMDataset(Dataset):
         return img, y, id_
     
     def __len__(self):
-        return len(self.ids)
+        return len(self.df)
 
 
 def to_tensor(x, **kwargs):
@@ -60,10 +58,11 @@ def build_train_transform(brightness_limit=.2,
         size (int): the output size for images (3, size, size).
     """
     _transform = [
+        albu.Resize(size, size),
         albu.HorizontalFlip(p=.5), 
         albu.VerticalFlip(p=.5), 
+        albu.ShiftScaleRotate(p=.5),
         albu.RandomBrightnessContrast(brightness_limit, contrast_limit, p=.5),
-        albu.Resize(size, size),
         albu.Lambda(image=to_tensor),
         ]
 
