@@ -121,18 +121,19 @@ def stratified_split(df: pd.DataFrame, train_frac: float=.7, seed=2019):
     return train_ids, test_ids
 
 
-def over_sample(df: pd.DataFrame, imbalance=True):
+def over_sample(df: pd.DataFrame, frac=.3, imbalance=True):
     """If the distribution of target is imbalanced, do oversample
     Args:
         df (pd.DataFrame): training dataframe.
+        frac (float): between 0 and 1, to reduce some data.
         imbalance (bool): to do oversampling or not.
     """
+    if imbalance:
+        weights = df['target'].value_counts()
+        weights = ((2*weights.max())/(3*weights)).apply(int).sort_index().to_list()
 
-    weights = df['target'].value_counts()
-    weights = ((2*weights.max())/(3*weights)).apply(int).sort_index().to_list()
-
-    for cat in range(len(weights)):
-        df = pd.concat([df]+[df.loc[df['target']==cat]]*weights[cat], axis=0)
-    df = df.sample(frac=1).reset_index(drop=True)
+        for cat in range(len(weights)):
+            df = pd.concat([df]+[df.loc[df['target']==cat]]*weights[cat], axis=0)
+        df = df.sample(frac=frac).reset_index(drop=True)
 
     return df

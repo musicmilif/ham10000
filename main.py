@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
-from torch.utils.data.sampler import RandomSampler
+from torch.utils.data.sampler import RandomSampler, WeightedRandomSampler
 from pretrainedmodels import model_names
 
 import matplotlib
@@ -53,7 +53,7 @@ def main(args):
     model = model.to(device)
 
     train_df = df.loc[df['image_id'].isin(train_ids)]
-    train_df = over_sample(train_df)
+    train_df = over_sample(train_df, imbalance=False)
     valid_df = df.loc[df['image_id'].isin(valid_ids)]
 
     train_dataset = HAMDataset(
@@ -113,10 +113,11 @@ def main(args):
             train_loss.update(loss.item())
             train_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
 
-            LOGGER.info(STATUS_MSG_T.format(batch_idx+1,
-                                            n_batches,
-                                            train_loss.avg,
-                                            train_acc.avg))
+            if batch_idx % 10 == 9:
+                LOGGER.info(STATUS_MSG_T.format(batch_idx+1,
+                                                n_batches,
+                                                train_loss.avg,
+                                                train_acc.avg))
         # Validation
         val_ids, val_labels, val_preds = [], [], []
         model.eval()
