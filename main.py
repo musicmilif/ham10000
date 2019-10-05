@@ -65,16 +65,10 @@ def main(args):
         build_test_transform()
         )
 
-    # weights = df.loc[df['image_id'].isin(train_ids), 'target'].value_counts()
-    # weights = (1./weights).sort_index().to_list()
-    # weights = torch.tensor(weights).to(device)
-    # train_sampler = WeightedRandomSampler(weights, args.batch_size)
-
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        # sampler=train_sampler,
         num_workers=10
         )
     valid_loader = DataLoader(
