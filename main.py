@@ -15,7 +15,7 @@ matplotlib.use('agg')
 from src.utils import generate_meta, stratified_split, create_loss_plot, setup_logging
 from src.data_utils import HAMDataset, build_train_transform, build_test_transform, build_preprocess
 from modeling.model import HAMNet
-from modeling.utils import save_checkpoint, AverageMeter
+from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint
 
 STATUS_MSG_T = "Batches done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
 STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
@@ -61,21 +61,27 @@ def main(args):
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
-        # sampler=RandomSampler(train_dataset),
-        num_workers=8
+        num_workers=10
         )
     valid_loader = DataLoader(
         valid_dataset, 
         batch_size=args.batch_size,
-        num_workers=8
+        shuffle=False,
+        num_workers=10
         )
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss().to(device)
 
+    start_epoch = 1
+    if args.load_weight:
+        ckpt = utils.load_checkpoint(path=args.load_weight, model=model, optimizer=optimizer, epoch=True)
+        model, optimizer, start_epoch = ckpt['model'], ckpt['optimizer'], ckpt['epoch'] + 1
+        model = model.to(device)
+
     best_acc = 0
     epochs, train_losses, valid_losses = [], [], []
-    for epoch in range(1, args.num_epochs+1):
+    for epoch in range(start_epoch, start_epoch+args.num_epochs):
         # Training
         LOGGER.info(f'Epoch: {epoch}')
         model.train()
@@ -151,7 +157,9 @@ def parse_arguments(argv):
                         help='network architecture')
     parser.add_argument('--num-epochs', default=10, type=int,
                         help='Number of training epochs')
-    
+    parser.add_argument('--load-weight', default='', type=str,
+                    help='Load pre-trained weight')
+
     return parser.parse_args(argv)
 
 
