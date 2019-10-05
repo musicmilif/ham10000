@@ -133,6 +133,6 @@ def over_sample(df: pd.DataFrame, imbalance=True):
 
     for cat in range(len(weights)):
         df = pd.concat([df]+[df.loc[df['target']==cat]]*weights[cat], axis=0)
-    df.reset_index(drop=True, inplace=True)
+    df = df.sample(frac=1).reset_index(drop=True)
 
     return df
