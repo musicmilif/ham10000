@@ -1,166 +1,159 @@
-"""Train classifier on HAM10000 dataset.
-"""
-
+import os
+import sys
 import argparse
+import logging
+import numpy as np
+import torch
+from torch import nn
+from torch import optim
+from torch.utils.data import DataLoader
+from torch.utils.data.sampler import RandomSampler
+
 import matplotlib
 matplotlib.use('agg')
-import torch.optim as optim
-from torch.utils.data.sampler import RandomSampler
-import torch.backends.cudnn as cudnn
 
-from networks.SimpleCNN import *
-from lib.dataset import *
-from lib.utils import *
+from src.utils import generate_meta, stratified_split, create_loss_plot, setup_logging
+from src.data_utils import HAMDataset, build_train_transform, build_test_transform, build_preprocess
+from modeling.model import HAMNet
+from modeling.utils import save_checkpoint, AverageMeter
 
-
-# Parse args.
-parser = argparse.ArgumentParser(description='PyTorch classifier on HAM10000 dataset')
-parser.add_argument('--data-dir', default='./data', help='path to data')
-parser.add_argument('--train_fraction', default=0.01, type=float,
-                    help='fraction of dataset to use for training')
-parser.add_argument('--val_fraction', default=0.01, type=float,
-                    help='fraction of dataset to use for validation')
-parser.add_argument('--exp-name', default='baseline', type=str,
-                    help='name of experiment')
-parser.add_argument('--log-level', default='INFO', choices = ['DEBUG', 'INFO'],
-                    help='log-level to use')
-parser.add_argument('--batch-size', default=4, type=int,
-                    help='batch-size to use')
-parser.add_argument('--network', default='SimpleCNN', choices=['SimpleCNN'],
-                    help='network architecture')
-parser.add_argument('--num-epochs', default=10, type=int,
-                    help='Number of training epochs')
-args = parser.parse_args()
+STATUS_MSG_T = "Batches done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
+STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-# Globals.
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-best_acc = 0  # best test accuracy
+def main(args):
+    # Logging
+    LOGGER = logging.getLogger(__name__)
+    exp_dir = os.path.join('experiments', '{}'.format(args.exp_name))
+    log_file = os.path.join(exp_dir, 'log.log')
+    npy_file = os.path.join(exp_dir, 'final_results.npy')
+    os.makedirs(exp_dir, exist_ok=True)
+    setup_logging(log_path=log_file, log_level=args.log_level, logger=LOGGER)
+    args_file = os.path.join(exp_dir, 'args.log')
+    with open(args_file, 'w') as f:
+        f.write(str(args))
 
-# Logging.
-LOGGER = logging.getLogger(__name__)
-exp_dir = os.path.join('experiments', '{}'.format(args.exp_name))
-log_file = os.path.join(exp_dir, 'log.log')
-npy_file = os.path.join(exp_dir, 'final_results.npy')
-os.makedirs(exp_dir, exist_ok=True)
-setup_logging(log_path=log_file, log_level=args.log_level, logger=LOGGER)
-args_file = os.path.join(exp_dir, 'args.log')
-with open(args_file, 'w') as the_file:
-    the_file.write(str(args))
-STATUS_MSG = "Batches done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
+    # Initialize datasets and loaders.
+    LOGGER.info('Data Processing...')
 
+    df = generate_meta(args.data_dir)
+    train_ids, valid_ids = stratified_split(df)
+    n_classes = df['target'].max()+1
 
-# Initialize datasets and loaders.
-LOGGER.info('==> Preparing data..')
-train_ids, val_ids = create_train_val_split(args.data_dir,
-                                            args.train_fraction,
-                                            args.val_fraction)
-train_set = HAM10000(args.data_dir, train_ids)
-val_set = HAM10000(args.data_dir, val_ids)
+    model = HAMNet(n_classes, model_name=args.backbone)
+    model = model.to(device)
 
-train_sampler = RandomSampler(train_set)
-num_classes = train_set.get_num_classes()
-train_loader = torch.utils.data.DataLoader(train_set,
-                                           batch_size=args.batch_size,
-                                           sampler=train_sampler,
-                                           num_workers=8)
-val_loader = torch.utils.data.DataLoader(val_set,
-                                         batch_size=args.batch_size,
-                                         num_workers=8)
+    train_dataset = HAMDataset(
+        train_ids,
+        df,
+        build_preprocess(model.mean, model.std),
+        build_train_transform()
+        )
+    valid_dataset = HAMDataset(
+        valid_ids,
+        df,
+        build_preprocess(model.mean, model.std),
+        build_test_transform()
+        )
 
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=args.batch_size,
+        shuffle=True,
+        # sampler=RandomSampler(train_dataset),
+        num_workers=8
+        )
+    valid_loader = DataLoader(
+        valid_dataset, 
+        batch_size=args.batch_size,
+        num_workers=8
+        )
 
-# Model.
-LOGGER.info('==> Building model..')
-if args.network == 'SimpleCNN':
-    net = SimpleCNN(num_classes=num_classes)
-net = net.to(device)
-if device == 'cuda':
-    net = torch.nn.DataParallel(net)
-    cudnn.benchmark = True
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    criterion = nn.CrossEntropyLoss().to(device)
 
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(net.parameters())
+    best_acc = 0
+    epochs, train_losses, valid_losses = [], [], []
+    for epoch in range(1, args.num_epochs+1):
+        # Training
+        LOGGER.info(f'Epoch: {epoch}')
+        model.train()
+        n_batches = len(train_loader.dataset) // args.batch_size + 1
 
+        train_loss = AverageMeter()
+        train_acc = AverageMeter()
 
-# Training.
-def train(epoch):
-    LOGGER.info('Epoch: %d' % epoch)
-    net.train()
-    train_loss = 0
-    correct = 0
-    total = 0
-    n_batches = len(train_loader.dataset) // args.batch_size
-
-    for batch_idx, (inputs, targets) in enumerate(train_loader):
-        inputs, targets = inputs.to(device), targets.to(device)
-        optimizer.zero_grad()
-        outputs = net(inputs)
-        loss = criterion(outputs, targets)
-        loss.backward()
-        optimizer.step()
-
-        train_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
-
-        LOGGER.info(STATUS_MSG.format(batch_idx+1,
-                                      n_batches,
-                                      train_loss/(batch_idx+1),
-                                      100.*correct/total))
-
-    return train_loss/(batch_idx+1)
-
-
-def test(epoch):
-    global best_acc
-    net.eval()
-    test_loss = 0
-    correct = 0
-    total = 0
-    n_batches = len(val_loader.dataset) // args.batch_size
-
-    with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(val_loader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = net(inputs)
+        for batch_idx, (inputs, targets, _) in enumerate(train_loader):
+            inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
             loss = criterion(outputs, targets)
+            loss.backward()
+            optimizer.step()
+            _, predicted = outputs.max(dim=1)
 
-            test_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+            train_loss.update(loss.item())
+            train_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
 
-            LOGGER.info(STATUS_MSG.format(batch_idx+1,
-                                          n_batches,
-                                          test_loss/(batch_idx+1),
-                                          100.*correct/total))
+            LOGGER.info(STATUS_MSG_T.format(batch_idx+1,
+                                            n_batches,
+                                            train_loss.avg,
+                                            train_acc.avg))
+        # Validation
+        model.eval()
 
-    # Save checkpoint.
-    acc = 100.*correct/total
-    state = {
-        'net': net.state_dict(),
-        'acc': acc,
-        'epoch': epoch,
-    }
-    if acc > best_acc:
-        LOGGER.info('Saving..')
-        save_checkpoint(state, exp_dir, backup_as_best=True)
-        best_acc = acc
-    else:
-        save_checkpoint(state, exp_dir, backup_as_best=False)
+        valid_loss = AverageMeter()
+        valid_acc = AverageMeter()
 
-    return test_loss/(batch_idx+1)
+        with torch.no_grad():
+            for batch_idx, (inputs, targets, _) in enumerate(valid_loader):
+                inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
+
+                _, predicted = outputs.max(dim=1)
+                valid_loss.update(loss.item())
+                valid_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
+
+        LOGGER.info(STATUS_MSG_V.format(epoch,
+                                        args.num_epochs,
+                                        valid_loss.avg,
+                                        valid_acc.avg))
+
+        # Save checkpoint.
+        if valid_acc.avg > best_acc:
+            LOGGER.info('Saving..')
+            output_file_name = os.path.join(exp_dir, f'checkpoint_{valid_acc.avg:.3f}.ckpt')
+            save_checkpoint(path=output_file_name,
+                            model=model,
+                            epoch=epoch,
+                            optimizer=optimizer)
+            best_acc = valid_acc.avg
+
+        epochs.append(epoch)
+        train_losses.append(train_loss.avg)
+        valid_losses.append(valid_loss.avg)
+        create_loss_plot(exp_dir, epochs, train_losses, valid_losses)
+        np.save(npy_file, [train_losses, valid_losses])
+
+
+def parse_arguments(argv):
+    parser = argparse.ArgumentParser(description='PyTorch classifier on HAM10000 dataset')
+    parser.add_argument('--data-dir', default='/disk/HAM10000/', help='path to data')
+    parser.add_argument('--exp-name', default='baseline', type=str,
+                        help='name of experiment')
+    parser.add_argument('--log-level', default='INFO', choices = ['DEBUG', 'INFO'],
+                        help='log-level to use')
+    parser.add_argument('--batch-size', default=64, type=int,
+                        help='batch-size to use')
+    parser.add_argument('--backbone', default='resnet18', choices=['resnet18', 'se_resnet50'],
+                        help='network architecture')
+    parser.add_argument('--num-epochs', default=10, type=int,
+                        help='Number of training epochs')
+    
+    return parser.parse_args(argv)
 
 
 if __name__ == '__main__':
-    epochs, train_losses, test_losses = [], [], []
-
-    for epoch in range(0, args.num_epochs):
-        train_loss = train(epoch)
-        test_loss = test(epoch)
-        epochs.append(epoch)
-        train_losses.append(train_loss)
-        test_losses.append(test_loss)
-        create_loss_plot(exp_dir, epochs, train_losses, test_losses)
-        np.save(npy_file, [train_losses, test_losses])
+    main(parse_arguments(sys.argv[1:]))
