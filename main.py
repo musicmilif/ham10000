@@ -95,12 +95,12 @@ def main(args):
         # Training
         LOGGER.info(f'Epoch: {epoch}')
         model.train()
-        n_batches = len(train_loader.dataset) // args.batch_size + 1
+        n_batches = len(valid_loader.dataset) // args.batch_size + 1
 
         train_loss = AverageMeter()
         train_acc = AverageMeter()
 
-        for batch_idx, (inputs, targets, _) in enumerate(train_loader):
+        for batch_idx, (inputs, targets, _) in enumerate(valid_loader):
             inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
