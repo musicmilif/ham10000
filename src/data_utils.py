@@ -48,13 +48,9 @@ def to_tensor(x, **kwargs):
     return x.transpose(2,0,1).astype('float32')
 
 
-def build_train_transform(brightness_limit=.2, 
-                          contrast_limit=.2,
-                          size=244):
+def build_train_transform(size=244):
     """Build argmentation process for training data
     Arg:
-        brightness_limit (flaot): a upper and lower bound for brightening.
-        contrast_limit (float): a upper and lower bound for contrast.
         size (int): the output size for images (3, size, size).
     """
     _transform = [
@@ -62,7 +58,6 @@ def build_train_transform(brightness_limit=.2,
         albu.HorizontalFlip(p=.5), 
         albu.VerticalFlip(p=.5), 
         albu.ShiftScaleRotate(p=.5),
-        albu.RandomBrightnessContrast(brightness_limit, contrast_limit, p=.5),
         albu.Lambda(image=to_tensor),
         ]
 

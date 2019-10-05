@@ -1,0 +1,135 @@
+2019-10-06 00:12:34,425 INFO  __main__        - Log file is experiments/resnet18_v2/log.log
+2019-10-06 00:12:34,426 INFO  __main__        - Data Processing...
+2019-10-06 00:12:37,579 INFO  __main__        - Epoch: 1
+2019-10-06 00:12:40,666 INFO  __main__        - Batches done: 10/119 | Loss: 1.774869 | Accuracy: 0.284375
+2019-10-06 00:12:42,228 INFO  __main__        - Batches done: 20/119 | Loss: 1.611901 | Accuracy: 0.374219
+2019-10-06 00:12:43,675 INFO  __main__        - Batches done: 30/119 | Loss: 1.532896 | Accuracy: 0.402604
+2019-10-06 00:12:45,229 INFO  __main__        - Batches done: 40/119 | Loss: 1.448607 | Accuracy: 0.441016
+2019-10-06 00:12:46,676 INFO  __main__        - Batches done: 50/119 | Loss: 1.396727 | Accuracy: 0.464062
+2019-10-06 00:12:48,210 INFO  __main__        - Batches done: 60/119 | Loss: 1.344224 | Accuracy: 0.485938
+2019-10-06 00:12:49,712 INFO  __main__        - Batches done: 70/119 | Loss: 1.306898 | Accuracy: 0.502455
+2019-10-06 00:12:51,178 INFO  __main__        - Batches done: 80/119 | Loss: 1.276561 | Accuracy: 0.516211
+2019-10-06 00:12:52,658 INFO  __main__        - Batches done: 90/119 | Loss: 1.267903 | Accuracy: 0.516146
+2019-10-06 00:12:54,205 INFO  __main__        - Batches done: 100/119 | Loss: 1.246240 | Accuracy: 0.520625
+2019-10-06 00:12:55,689 INFO  __main__        - Batches done: 110/119 | Loss: 1.231258 | Accuracy: 0.527131
+2019-10-06 00:13:03,921 INFO  __main__        - Epochs done: 1/10 | Loss: 6.624185 | Accuracy: 0.111037
+2019-10-06 00:13:03,921 INFO  __main__        - Saving..
+2019-10-06 00:13:04,282 INFO  __main__        - Epoch: 2
+2019-10-06 00:13:07,549 INFO  __main__        - Batches done: 10/119 | Loss: 1.003475 | Accuracy: 0.639062
+2019-10-06 00:13:08,994 INFO  __main__        - Batches done: 20/119 | Loss: 1.007927 | Accuracy: 0.627344
+2019-10-06 00:13:10,648 INFO  __main__        - Batches done: 30/119 | Loss: 1.010707 | Accuracy: 0.621354
+2019-10-06 00:13:12,303 INFO  __main__        - Batches done: 40/119 | Loss: 0.985265 | Accuracy: 0.627344
+2019-10-06 00:13:13,772 INFO  __main__        - Batches done: 50/119 | Loss: 0.975926 | Accuracy: 0.632188
+2019-10-06 00:13:15,280 INFO  __main__        - Batches done: 60/119 | Loss: 0.969932 | Accuracy: 0.632812
+2019-10-06 00:13:16,978 INFO  __main__        - Batches done: 70/119 | Loss: 0.959402 | Accuracy: 0.634375
+2019-10-06 00:13:18,659 INFO  __main__        - Batches done: 80/119 | Loss: 0.952695 | Accuracy: 0.635938
+2019-10-06 00:13:20,265 INFO  __main__        - Batches done: 90/119 | Loss: 0.948146 | Accuracy: 0.637674
+2019-10-06 00:13:21,700 INFO  __main__        - Batches done: 100/119 | Loss: 0.950102 | Accuracy: 0.635469
+2019-10-06 00:13:23,058 INFO  __main__        - Batches done: 110/119 | Loss: 0.944934 | Accuracy: 0.638352
+2019-10-06 00:13:31,364 INFO  __main__        - Epochs done: 2/10 | Loss: 3.915203 | Accuracy: 0.455785
+2019-10-06 00:13:31,364 INFO  __main__        - Saving..
+2019-10-06 00:13:31,719 INFO  __main__        - Epoch: 3
+2019-10-06 00:13:34,709 INFO  __main__        - Batches done: 10/119 | Loss: 0.948794 | Accuracy: 0.609375
+2019-10-06 00:13:36,173 INFO  __main__        - Batches done: 20/119 | Loss: 0.887076 | Accuracy: 0.644531
+2019-10-06 00:13:37,578 INFO  __main__        - Batches done: 30/119 | Loss: 0.865857 | Accuracy: 0.653125
+2019-10-06 00:13:38,986 INFO  __main__        - Batches done: 40/119 | Loss: 0.857845 | Accuracy: 0.653516
+2019-10-06 00:13:40,504 INFO  __main__        - Batches done: 50/119 | Loss: 0.852821 | Accuracy: 0.662813
+2019-10-06 00:13:42,026 INFO  __main__        - Batches done: 60/119 | Loss: 0.835261 | Accuracy: 0.671354
+2019-10-06 00:13:43,467 INFO  __main__        - Batches done: 70/119 | Loss: 0.832957 | Accuracy: 0.675000
+2019-10-06 00:13:44,965 INFO  __main__        - Batches done: 80/119 | Loss: 0.830892 | Accuracy: 0.677930
+2019-10-06 00:13:46,426 INFO  __main__        - Batches done: 90/119 | Loss: 0.828253 | Accuracy: 0.678125
+2019-10-06 00:13:47,954 INFO  __main__        - Batches done: 100/119 | Loss: 0.825937 | Accuracy: 0.681406
+2019-10-06 00:13:49,436 INFO  __main__        - Batches done: 110/119 | Loss: 0.826732 | Accuracy: 0.680398
+2019-10-06 00:13:57,716 INFO  __main__        - Epochs done: 3/10 | Loss: 4.377901 | Accuracy: 0.668883
+2019-10-06 00:13:57,716 INFO  __main__        - Saving..
+2019-10-06 00:13:58,075 INFO  __main__        - Epoch: 4
+2019-10-06 00:14:01,094 INFO  __main__        - Batches done: 10/119 | Loss: 0.744852 | Accuracy: 0.707812
+2019-10-06 00:14:02,665 INFO  __main__        - Batches done: 20/119 | Loss: 0.816864 | Accuracy: 0.689844
+2019-10-06 00:14:04,221 INFO  __main__        - Batches done: 30/119 | Loss: 0.834836 | Accuracy: 0.680208
+2019-10-06 00:14:05,661 INFO  __main__        - Batches done: 40/119 | Loss: 0.812572 | Accuracy: 0.685937
+2019-10-06 00:14:07,107 INFO  __main__        - Batches done: 50/119 | Loss: 0.799020 | Accuracy: 0.693125
+2019-10-06 00:14:08,618 INFO  __main__        - Batches done: 60/119 | Loss: 0.799327 | Accuracy: 0.691146
+2019-10-06 00:14:10,156 INFO  __main__        - Batches done: 70/119 | Loss: 0.793949 | Accuracy: 0.693304
+2019-10-06 00:14:11,697 INFO  __main__        - Batches done: 80/119 | Loss: 0.790376 | Accuracy: 0.697266
+2019-10-06 00:14:13,211 INFO  __main__        - Batches done: 90/119 | Loss: 0.783167 | Accuracy: 0.701562
+2019-10-06 00:14:14,718 INFO  __main__        - Batches done: 100/119 | Loss: 0.774913 | Accuracy: 0.702812
+2019-10-06 00:14:16,159 INFO  __main__        - Batches done: 110/119 | Loss: 0.775229 | Accuracy: 0.701278
+2019-10-06 00:14:24,464 INFO  __main__        - Epochs done: 4/10 | Loss: 1.598314 | Accuracy: 0.668883
+2019-10-06 00:14:24,791 INFO  __main__        - Epoch: 5
+2019-10-06 00:14:27,930 INFO  __main__        - Batches done: 10/119 | Loss: 0.763562 | Accuracy: 0.715625
+2019-10-06 00:14:29,414 INFO  __main__        - Batches done: 20/119 | Loss: 0.791775 | Accuracy: 0.695312
+2019-10-06 00:14:30,873 INFO  __main__        - Batches done: 30/119 | Loss: 0.794228 | Accuracy: 0.692708
+2019-10-06 00:14:32,403 INFO  __main__        - Batches done: 40/119 | Loss: 0.779173 | Accuracy: 0.701172
+2019-10-06 00:14:33,825 INFO  __main__        - Batches done: 50/119 | Loss: 0.769834 | Accuracy: 0.705625
+2019-10-06 00:14:35,270 INFO  __main__        - Batches done: 60/119 | Loss: 0.758831 | Accuracy: 0.709115
+2019-10-06 00:14:36,759 INFO  __main__        - Batches done: 70/119 | Loss: 0.749671 | Accuracy: 0.712500
+2019-10-06 00:14:38,258 INFO  __main__        - Batches done: 80/119 | Loss: 0.736063 | Accuracy: 0.719336
+2019-10-06 00:14:39,738 INFO  __main__        - Batches done: 90/119 | Loss: 0.726914 | Accuracy: 0.721528
+2019-10-06 00:14:41,213 INFO  __main__        - Batches done: 100/119 | Loss: 0.724782 | Accuracy: 0.720781
+2019-10-06 00:14:42,895 INFO  __main__        - Batches done: 110/119 | Loss: 0.721076 | Accuracy: 0.722159
+2019-10-06 00:14:51,136 INFO  __main__        - Epochs done: 5/10 | Loss: 3.948934 | Accuracy: 0.668883
+2019-10-06 00:14:51,444 INFO  __main__        - Epoch: 6
+2019-10-06 00:14:54,599 INFO  __main__        - Batches done: 10/119 | Loss: 0.676824 | Accuracy: 0.750000
+2019-10-06 00:14:56,271 INFO  __main__        - Batches done: 20/119 | Loss: 0.631939 | Accuracy: 0.760938
+2019-10-06 00:14:57,866 INFO  __main__        - Batches done: 30/119 | Loss: 0.659826 | Accuracy: 0.752083
+2019-10-06 00:14:59,395 INFO  __main__        - Batches done: 40/119 | Loss: 0.659764 | Accuracy: 0.749219
+2019-10-06 00:15:00,872 INFO  __main__        - Batches done: 50/119 | Loss: 0.666698 | Accuracy: 0.745625
+2019-10-06 00:15:02,436 INFO  __main__        - Batches done: 60/119 | Loss: 0.670661 | Accuracy: 0.744792
+2019-10-06 00:15:04,004 INFO  __main__        - Batches done: 70/119 | Loss: 0.667197 | Accuracy: 0.746652
+2019-10-06 00:15:05,504 INFO  __main__        - Batches done: 80/119 | Loss: 0.663107 | Accuracy: 0.747852
+2019-10-06 00:15:07,129 INFO  __main__        - Batches done: 90/119 | Loss: 0.653645 | Accuracy: 0.752083
+2019-10-06 00:15:08,617 INFO  __main__        - Batches done: 100/119 | Loss: 0.655272 | Accuracy: 0.751875
+2019-10-06 00:15:10,138 INFO  __main__        - Batches done: 110/119 | Loss: 0.657591 | Accuracy: 0.749858
+2019-10-06 00:15:18,921 INFO  __main__        - Epochs done: 6/10 | Loss: 1.776924 | Accuracy: 0.668883
+2019-10-06 00:15:19,252 INFO  __main__        - Epoch: 7
+2019-10-06 00:15:22,282 INFO  __main__        - Batches done: 10/119 | Loss: 0.584188 | Accuracy: 0.768750
+2019-10-06 00:15:23,874 INFO  __main__        - Batches done: 20/119 | Loss: 0.627455 | Accuracy: 0.753906
+2019-10-06 00:15:25,633 INFO  __main__        - Batches done: 30/119 | Loss: 0.615884 | Accuracy: 0.755729
+2019-10-06 00:15:27,273 INFO  __main__        - Batches done: 40/119 | Loss: 0.600601 | Accuracy: 0.767188
+2019-10-06 00:15:28,879 INFO  __main__        - Batches done: 50/119 | Loss: 0.601758 | Accuracy: 0.768125
+2019-10-06 00:15:30,644 INFO  __main__        - Batches done: 60/119 | Loss: 0.612658 | Accuracy: 0.767448
+2019-10-06 00:15:32,132 INFO  __main__        - Batches done: 70/119 | Loss: 0.610862 | Accuracy: 0.769420
+2019-10-06 00:15:33,638 INFO  __main__        - Batches done: 80/119 | Loss: 0.601853 | Accuracy: 0.772266
+2019-10-06 00:15:35,261 INFO  __main__        - Batches done: 90/119 | Loss: 0.603398 | Accuracy: 0.771354
+2019-10-06 00:15:36,701 INFO  __main__        - Batches done: 100/119 | Loss: 0.604088 | Accuracy: 0.771250
+2019-10-06 00:15:38,095 INFO  __main__        - Batches done: 110/119 | Loss: 0.605505 | Accuracy: 0.769602
+2019-10-06 00:15:46,444 INFO  __main__        - Epochs done: 7/10 | Loss: 26.101927 | Accuracy: 0.668883
+2019-10-06 00:15:46,746 INFO  __main__        - Epoch: 8
+2019-10-06 00:15:49,829 INFO  __main__        - Batches done: 10/119 | Loss: 0.641844 | Accuracy: 0.751563
+2019-10-06 00:15:51,334 INFO  __main__        - Batches done: 20/119 | Loss: 0.646112 | Accuracy: 0.746094
+2019-10-06 00:15:52,894 INFO  __main__        - Batches done: 30/119 | Loss: 0.641248 | Accuracy: 0.743229
+2019-10-06 00:15:54,451 INFO  __main__        - Batches done: 40/119 | Loss: 0.620611 | Accuracy: 0.750391
+2019-10-06 00:15:55,962 INFO  __main__        - Batches done: 50/119 | Loss: 0.616343 | Accuracy: 0.755625
+2019-10-06 00:15:57,498 INFO  __main__        - Batches done: 60/119 | Loss: 0.606525 | Accuracy: 0.762240
+2019-10-06 00:15:59,137 INFO  __main__        - Batches done: 70/119 | Loss: 0.601576 | Accuracy: 0.764286
+2019-10-06 00:16:00,735 INFO  __main__        - Batches done: 80/119 | Loss: 0.593975 | Accuracy: 0.767383
+2019-10-06 00:16:02,283 INFO  __main__        - Batches done: 90/119 | Loss: 0.588275 | Accuracy: 0.768924
+2019-10-06 00:16:03,819 INFO  __main__        - Batches done: 100/119 | Loss: 0.586825 | Accuracy: 0.769531
+2019-10-06 00:16:05,339 INFO  __main__        - Batches done: 110/119 | Loss: 0.580461 | Accuracy: 0.773011
+2019-10-06 00:16:13,649 INFO  __main__        - Epochs done: 8/10 | Loss: 3.090960 | Accuracy: 0.014295
+2019-10-06 00:16:13,946 INFO  __main__        - Epoch: 9
+2019-10-06 00:16:17,027 INFO  __main__        - Batches done: 10/119 | Loss: 0.498520 | Accuracy: 0.790625
+2019-10-06 00:16:18,651 INFO  __main__        - Batches done: 20/119 | Loss: 0.581141 | Accuracy: 0.766406
+2019-10-06 00:16:20,252 INFO  __main__        - Batches done: 30/119 | Loss: 0.562219 | Accuracy: 0.775521
+2019-10-06 00:16:21,726 INFO  __main__        - Batches done: 40/119 | Loss: 0.557211 | Accuracy: 0.781641
+2019-10-06 00:16:23,153 INFO  __main__        - Batches done: 50/119 | Loss: 0.548320 | Accuracy: 0.783125
+2019-10-06 00:16:24,588 INFO  __main__        - Batches done: 60/119 | Loss: 0.537914 | Accuracy: 0.789062
+2019-10-06 00:16:26,024 INFO  __main__        - Batches done: 70/119 | Loss: 0.538820 | Accuracy: 0.790402
+2019-10-06 00:16:27,435 INFO  __main__        - Batches done: 80/119 | Loss: 0.533404 | Accuracy: 0.792188
+2019-10-06 00:16:29,021 INFO  __main__        - Batches done: 90/119 | Loss: 0.527531 | Accuracy: 0.794618
+2019-10-06 00:16:30,515 INFO  __main__        - Batches done: 100/119 | Loss: 0.533684 | Accuracy: 0.794063
+2019-10-06 00:16:31,976 INFO  __main__        - Batches done: 110/119 | Loss: 0.534376 | Accuracy: 0.794744
+2019-10-06 00:16:40,332 INFO  __main__        - Epochs done: 9/10 | Loss: 18.389098 | Accuracy: 0.668883
+2019-10-06 00:16:40,631 INFO  __main__        - Epoch: 10
+2019-10-06 00:16:43,680 INFO  __main__        - Batches done: 10/119 | Loss: 0.491023 | Accuracy: 0.818750
+2019-10-06 00:16:45,350 INFO  __main__        - Batches done: 20/119 | Loss: 0.491685 | Accuracy: 0.819531
+2019-10-06 00:16:46,988 INFO  __main__        - Batches done: 30/119 | Loss: 0.480398 | Accuracy: 0.819792
+2019-10-06 00:16:48,414 INFO  __main__        - Batches done: 40/119 | Loss: 0.484660 | Accuracy: 0.815625
+2019-10-06 00:16:49,837 INFO  __main__        - Batches done: 50/119 | Loss: 0.499597 | Accuracy: 0.810312
+2019-10-06 00:16:51,253 INFO  __main__        - Batches done: 60/119 | Loss: 0.506183 | Accuracy: 0.806250
+2019-10-06 00:16:52,728 INFO  __main__        - Batches done: 70/119 | Loss: 0.505274 | Accuracy: 0.807143
+2019-10-06 00:16:54,163 INFO  __main__        - Batches done: 80/119 | Loss: 0.502571 | Accuracy: 0.809375
+2019-10-06 00:16:55,719 INFO  __main__        - Batches done: 90/119 | Loss: 0.504591 | Accuracy: 0.809549
+2019-10-06 00:16:57,188 INFO  __main__        - Batches done: 100/119 | Loss: 0.507152 | Accuracy: 0.808438
+2019-10-06 00:16:58,690 INFO  __main__        - Batches done: 110/119 | Loss: 0.511009 | Accuracy: 0.808807
+2019-10-06 00:17:07,024 INFO  __main__        - Epochs done: 10/10 | Loss: 3.633060 | Accuracy: 0.668883

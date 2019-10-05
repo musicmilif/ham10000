@@ -1,0 +1,1 @@
+Namespace(backbone='resnet18', batch_size=64, data_dir='/disk/HAM10000/', load_weight='', log_level='INFO', num_epochs=10, version=2)
