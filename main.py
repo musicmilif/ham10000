@@ -3,16 +3,23 @@ import sys
 import argparse
 import logging
 import numpy as np
+from sklearn.metrics import confusion_matrix
 import torch
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.data.sampler import RandomSampler
+from pretrainedmodels import model_names
 
 import matplotlib
 matplotlib.use('agg')
 
-from src.utils import generate_meta, stratified_split, create_loss_plot, setup_logging
+from src.utils import (generate_meta, 
+                       stratified_split, 
+                       over_sample,
+                       create_loss_plot, 
+                       setup_logging, 
+                       create_confusion_matrix)
 from src.data_utils import HAMDataset, build_train_transform, build_test_transform, build_preprocess
 from modeling.model import HAMNet
 from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint
@@ -25,9 +32,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 def main(args):
     # Logging
     LOGGER = logging.getLogger(__name__)
-    exp_dir = os.path.join('experiments', '{}'.format(args.exp_name))
+    exp_dir = os.path.join('experiments', f'{args.backbone}_v{args.version}')
     log_file = os.path.join(exp_dir, 'log.log')
-    npy_file = os.path.join(exp_dir, 'final_results.npy')
+    loss_file = os.path.join(exp_dir, 'results_loss.npy')
+    confusion_file = os.path.join(exp_dir, 'results_confusion.npy')
     os.makedirs(exp_dir, exist_ok=True)
     setup_logging(log_path=log_file, log_level=args.log_level, logger=LOGGER)
     args_file = os.path.join(exp_dir, 'args.log')
@@ -57,10 +65,16 @@ def main(args):
         build_test_transform()
         )
 
+    # weights = df.loc[df['image_id'].isin(train_ids), 'target'].value_counts()
+    # weights = (1./weights).sort_index().to_list()
+    # weights = torch.tensor(weights).to(device)
+    # train_sampler = WeightedRandomSampler(weights, args.batch_size)
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
+        # sampler=train_sampler,
         num_workers=10
         )
     valid_loader = DataLoader(
@@ -92,9 +106,10 @@ def main(args):
 
         for batch_idx, (inputs, targets, _) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
-            optimizer.zero_grad()
             outputs = model(inputs)
             loss = criterion(outputs, targets)
+
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             _, predicted = outputs.max(dim=1)
@@ -107,13 +122,14 @@ def main(args):
                                             train_loss.avg,
                                             train_acc.avg))
         # Validation
+        val_ids, val_labels, val_preds = [], [], []
         model.eval()
 
         valid_loss = AverageMeter()
         valid_acc = AverageMeter()
 
         with torch.no_grad():
-            for batch_idx, (inputs, targets, _) in enumerate(valid_loader):
+            for batch_idx, (inputs, targets, img_id) in enumerate(valid_loader):
                 inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
                 outputs = model(inputs)
                 loss = criterion(outputs, targets)
@@ -121,6 +137,10 @@ def main(args):
                 _, predicted = outputs.max(dim=1)
                 valid_loss.update(loss.item())
                 valid_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
+
+                val_ids.extend(img_id)
+                val_labels.extend(targets.cpu().numpy())
+                val_preds.extend(np.squeeze(predicted.cpu().numpy().T))
 
         LOGGER.info(STATUS_MSG_V.format(epoch,
                                         args.num_epochs,
@@ -141,19 +161,23 @@ def main(args):
         train_losses.append(train_loss.avg)
         valid_losses.append(valid_loss.avg)
         create_loss_plot(exp_dir, epochs, train_losses, valid_losses)
-        np.save(npy_file, [train_losses, valid_losses])
+        np.save(loss_file, [train_losses, valid_losses])
+        np.save(confusion_file, [val_ids, val_labels, val_preds])
+        confusion_mtx = confusion_matrix(val_labels, val_preds)
+        plot_labels = ['akiec', 'bcc', 'bkl', 'df', 'nv', 'vasc','mel']
+        create_confusion_matrix(exp_dir, confusion_mtx, plot_labels)
 
 
 def parse_arguments(argv):
     parser = argparse.ArgumentParser(description='PyTorch classifier on HAM10000 dataset')
     parser.add_argument('--data-dir', default='/disk/HAM10000/', help='path to data')
-    parser.add_argument('--exp-name', default='baseline', type=str,
-                        help='name of experiment')
+    parser.add_argument('--version', default=1, type=int,
+                        help='version of experiment')
     parser.add_argument('--log-level', default='INFO', choices = ['DEBUG', 'INFO'],
                         help='log-level to use')
     parser.add_argument('--batch-size', default=64, type=int,
                         help='batch-size to use')
-    parser.add_argument('--backbone', default='resnet18', choices=['resnet18', 'se_resnet50'],
+    parser.add_argument('--backbone', default='resnet18', choices=model_names,
                         help='network architecture')
     parser.add_argument('--num-epochs', default=10, type=int,
                         help='Number of training epochs')

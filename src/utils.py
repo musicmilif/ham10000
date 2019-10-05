@@ -1,6 +1,8 @@
 import os
 import logging
+import itertools
 from glob import glob
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit
 
@@ -54,6 +56,35 @@ def create_loss_plot(exp_dir, epochs, train_losses, test_losses):
     plt.plot(epochs, test_losses, 'r', marker='o', label='test loss')
     plt.legend()
     plt.savefig(os.path.join(exp_dir, 'loss.png'))
+    plt.close()
+
+
+def create_confusion_matrix(exp_dir, cm, classes, normalize=False, cmap=plt.cm.Blues):
+    """Plot confusion matrix on given dataset.
+    Args:
+        cm (): 
+    """
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title('Confusion matrix')
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, cm[i, j],
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
+    plt.tight_layout()
+    plt.ylabel('True label')
+    plt.xlabel('Predicted label')
+    plt.savefig(os.path.join(exp_dir, 'confusion_mtx.png'))
+    plt.close()
 
 
 def generate_meta(data_dir):
