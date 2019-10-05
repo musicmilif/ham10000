@@ -53,6 +53,7 @@ def main(args):
     model = model.to(device)
 
     train_df = df.loc[df['image_id'].isin(train_ids)]
+    train_df = over_sample(train_df)
     valid_df = df.loc[df['image_id'].isin(valid_ids)]
 
     train_dataset = HAMDataset(
