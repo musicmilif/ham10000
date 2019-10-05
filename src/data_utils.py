@@ -27,9 +27,9 @@ class HAMDataset(Dataset):
     
     def __getitem__(self, idx):
         id_ = self.ids[idx]
-        df_idx = self.df[self.df['image_id'] == id_].index
-        img_path = self.df['path'].iloc[idx]
-        y = self.df['target'].iloc[idx]
+        row = self.df.loc[self.df['image_id'] == id_]
+        img_path = row['path'].iloc[0]
+        y = row['target'].iloc[0]
         img = get_image(img_path)
 
         if self.preprocess:
