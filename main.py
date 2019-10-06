@@ -24,8 +24,8 @@ from src.data_utils import HAMDataset, build_train_transform, build_test_transfo
 from modeling.model import HAMNet
 from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint
 
-STATUS_MSG_T = "Batches done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
-STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:04f} | Accuracy: {:04f}"
+STATUS_MSG_T = "Batches done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgPrecision: {:.6f}"
+STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgPrecision: {:.6f}"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -99,6 +99,7 @@ def main(args):
 
         train_loss = AverageMeter()
         train_acc = AverageMeter()
+        train_map = AverageMeter()
 
         for batch_idx, (inputs, targets, _) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
@@ -110,20 +111,26 @@ def main(args):
             optimizer.step()
             _, predicted = outputs.max(dim=1)
 
+            # Update Metrics
+            from src.metrics import avg_precision
             train_loss.update(loss.item())
             train_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
+            train_map.update(avg_precision(targets.cpu().detach().numpy(), 
+                                           predicted.cpu().detach().numpy()))
 
             if batch_idx % 10 == 9:
                 LOGGER.info(STATUS_MSG_T.format(batch_idx+1,
                                                 n_batches,
                                                 train_loss.avg,
-                                                train_acc.avg))
+                                                train_acc.avg,
+                                                train_map.avg))
         # Validation
         val_ids, val_labels, val_preds = [], [], []
         model.eval()
 
         valid_loss = AverageMeter()
         valid_acc = AverageMeter()
+        valid_map = AverageMeter()
 
         with torch.no_grad():
             for batch_idx, (inputs, targets, img_id) in enumerate(valid_loader):
@@ -134,6 +141,8 @@ def main(args):
                 _, predicted = outputs.max(dim=1)
                 valid_loss.update(loss.item())
                 valid_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
+                valid_map.update(avg_precision(targets.cpu().numpy(), 
+                                               outputs.cpu().numpy()))
 
                 val_ids.extend(img_id)
                 val_labels.extend(targets.cpu().numpy())
@@ -142,7 +151,8 @@ def main(args):
         LOGGER.info(STATUS_MSG_V.format(epoch,
                                         args.num_epochs,
                                         valid_loss.avg,
-                                        valid_acc.avg))
+                                        valid_acc.avg,
+                                        valid_map.avg))
 
         # Save checkpoint.
         if valid_acc.avg > best_acc:
@@ -162,7 +172,7 @@ def main(args):
         np.save(confusion_file, [val_ids, val_labels, val_preds])
         confusion_mtx = confusion_matrix(val_labels, val_preds)
         plot_labels = ['akiec', 'bcc', 'bkl', 'df', 'nv', 'vasc','mel']
-        create_confusion_matrix(exp_dir, confusion_mtx, plot_labels)
+        create_confusion_matrix(exp_dir, confusion_mtx, plot_labels, normalize=True)
 
 
 def parse_arguments(argv):
