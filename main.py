@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import logging
+from glob import glob
 import numpy as np
 from sklearn.metrics import confusion_matrix
 import torch
@@ -49,6 +50,11 @@ def main(args):
     train_ids, valid_ids = stratified_split(df)
     n_classes = df['target'].max()+1
 
+    if len(args.loss_weight) != n_classes:
+        raise ValueError(f'Length of argument `loss-weight` should be {n_classes}, \
+                           got {len(args.loss_weight)} instead.')
+
+    # Build model and get pretrained weight by pretrainedmodels
     model = HAMNet(n_classes, model_name=args.backbone)
     model = model.to(device)
 
@@ -80,14 +86,20 @@ def main(args):
         num_workers=10
         )
 
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=args.lr)
     weights = torch.tensor(args.loss_weight).to(device)
     criterion = nn.CrossEntropyLoss(weight=weights).to(device)
 
     start_epoch = 1
-    if args.load_weight:
-        ckpt = utils.load_checkpoint(path=args.load_weight, model=model, optimizer=optimizer, epoch=True)
-        model, optimizer, start_epoch = ckpt['model'], ckpt['optimizer'], ckpt['epoch'] + 1
+    if args.load_version:
+        # Find the weight corresponding to the best score 
+        weight_folder = os.path.join('experiments', f'{args.backbone}_v{args.load_version}')
+        weights = [w for w in glob(f'{weight_folder}/*.ckpt')]
+        best_idx = np.argmax([w.split('/')[-1] for w in weights])
+        best_weight = weights[best_idx]
+
+        ckpt = load_checkpoint(path=best_weight, model=model, optimizer=optimizer, epoch=True)
+        model, optimizer, start_epoch = ckpt['model'], ckpt['optimizer'], ckpt['epoch']+1
         model = model.to(device)
 
     best_map = 0
@@ -188,12 +200,14 @@ def parse_arguments(argv):
                         help='log-level to use')
     parser.add_argument('--batch-size', default=64, type=int,
                         help='batch-size to use')
+    parser.add_argument('--lr', default=1e-3, type=float,
+                        help='learning rate to use')
     parser.add_argument('--backbone', default='resnet18', choices=model_names,
                         help='network architecture')
     parser.add_argument('--num-epochs', default=10, type=int,
                         help='Number of training epochs')
-    parser.add_argument('--load-weight', default='', type=str,
-                        help='Load pre-trained weight')
+    parser.add_argument('--load-version', default=0, type=int,
+                        help='load previous version of pre-trained weight')
     parser.add_argument('--acc-steps', default=1, type=int,
                         help='steps for accumulation gradient')
     parser.add_argument('--loss-weight', default=[1.,1.,1.,1.,1.,1.,1.], 
