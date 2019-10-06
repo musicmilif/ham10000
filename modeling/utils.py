@@ -1,6 +1,8 @@
+import numpy as np
 import torch
 from torch import nn
 from collections import OrderedDict
+import albumentations as albu
 
 
 class AverageMeter(object):
@@ -76,3 +78,31 @@ def load_checkpoint(path, model=None, optimizer=None, params=False, epoch=False)
         rets['epoch'] = resume['epoch']
 
     return rets
+
+
+class TestTimeAugment(object):
+    def __init__(self, model, times=4):
+        self.model = model
+        self.times = times
+        self.augment = albu.Compose([
+            albu.HorizontalFlip(p=.5), 
+            albu.VerticalFlip(p=.5), 
+            albu.ShiftScaleRotate(p=.9)
+            ])
+    
+    def predict(self, inputs):
+        device, dtype = inputs.device, inputs.dtype
+        batch_size = inputs.size(0)
+
+        outputs = self.model(inputs)
+        for _ in range(self.times):
+            images = np.zeros(shape=inputs.size())
+            for i in range(batch_size):
+                img = inputs[i].cpu().numpy().transpose(1, 2, 0)
+                img = self.augment(image=img)['image']
+                images[i] = img.transpose(2, 0, 1)  
+
+            images = torch.from_numpy(images).to(device).to(dtype)
+            outputs += self.model(images)
+        
+        return outputs / (self.times+1)
