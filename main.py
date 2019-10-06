@@ -53,7 +53,7 @@ def main(args):
     model = model.to(device)
 
     train_df = df.loc[df['image_id'].isin(train_ids)]
-    train_df = over_sample(train_df)
+    train_df = over_sample(train_df, args.imbalanced_weight, frac=1.)
     valid_df = df.loc[df['image_id'].isin(valid_ids)]
 
     train_dataset = HAMDataset(
@@ -81,7 +81,8 @@ def main(args):
         )
 
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.CrossEntropyLoss().to(device)
+    weights = torch.tensor(args.loss_weight).to(device)
+    criterion = nn.CrossEntropyLoss(weight=weights).to(device)
 
     start_epoch = 1
     if args.load_weight:
@@ -89,7 +90,7 @@ def main(args):
         model, optimizer, start_epoch = ckpt['model'], ckpt['optimizer'], ckpt['epoch'] + 1
         model = model.to(device)
 
-    best_acc = 0
+    best_map = 0
     epochs, train_losses, valid_losses = [], [], []
     for epoch in range(start_epoch, start_epoch+args.num_epochs):
         # Training
@@ -106,9 +107,12 @@ def main(args):
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
-            optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
+            # Gradient accumulation for larger batch size
+            if (batch_idx+1) % args.acc_steps == 0:
+                optimizer.step()
+                optimizer.zero_grad()
+
             _, predicted = outputs.max(dim=1)
 
             # Update Metrics
@@ -142,7 +146,7 @@ def main(args):
                 valid_loss.update(loss.item())
                 valid_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
                 valid_map.update(avg_precision(targets.cpu().numpy(), 
-                                               outputs.cpu().numpy()))
+                                               predicted.cpu().numpy()))
 
                 val_ids.extend(img_id)
                 val_labels.extend(targets.cpu().numpy())
@@ -155,14 +159,14 @@ def main(args):
                                         valid_map.avg))
 
         # Save checkpoint.
-        if valid_acc.avg > best_acc:
+        if valid_map.avg > best_map:
             LOGGER.info('Saving..')
-            output_file_name = os.path.join(exp_dir, f'checkpoint_{valid_acc.avg:.3f}.ckpt')
+            output_file_name = os.path.join(exp_dir, f'checkpoint_{valid_map.avg:.3f}.ckpt')
             save_checkpoint(path=output_file_name,
                             model=model,
                             epoch=epoch,
                             optimizer=optimizer)
-            best_acc = valid_acc.avg
+            best_map = valid_map.avg
 
         epochs.append(epoch)
         train_losses.append(train_loss.avg)
@@ -189,7 +193,13 @@ def parse_arguments(argv):
     parser.add_argument('--num-epochs', default=10, type=int,
                         help='Number of training epochs')
     parser.add_argument('--load-weight', default='', type=str,
-                    help='Load pre-trained weight')
+                        help='Load pre-trained weight')
+    parser.add_argument('--acc-steps', default=1, type=int,
+                        help='steps for accumulation gradient')
+    parser.add_argument('--loss-weight', default=[1.,1.,1.,1.,1.,1.,1.], 
+                        nargs='+', type=float, help='weights for loss function')
+    parser.add_argument('--imbalanced-weight', default=0.15, type=float, 
+                         help='the proportion for the least class instance compare to the most')
 
     return parser.parse_args(argv)
 
