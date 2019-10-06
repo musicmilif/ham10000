@@ -24,6 +24,7 @@ from src.utils import (generate_meta,
 from src.data_utils import HAMDataset, build_train_transform, build_test_transform, build_preprocess
 from modeling.model import HAMNet
 from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint
+from modeling.losses import FocalLoss
 
 STATUS_MSG_T = "Batches done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgPrecision: {:.6f}"
 STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgPrecision: {:.6f}"
@@ -41,7 +42,11 @@ def main(args):
     setup_logging(log_path=log_file, log_level=args.log_level, logger=LOGGER)
     args_file = os.path.join(exp_dir, 'args.log')
     with open(args_file, 'w') as f:
-        f.write(str(args))
+        args_logger = ''
+        for k, v in args.__dict__.items():
+            args_logger = '\n'.join([args_logger, f'{k}: {v}'])
+        
+        f.write(args_logger)
 
     # Initialize datasets and loaders.
     LOGGER.info('Data Processing...')
@@ -87,8 +92,9 @@ def main(args):
         )
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=300)
     weights = torch.tensor(args.loss_weight).to(device)
-    criterion = nn.CrossEntropyLoss(weight=weights).to(device)
+    criterion = FocalLoss(weight=weights, gamma=2).to(device)
 
     start_epoch = 1
     if args.load_version:
@@ -123,6 +129,7 @@ def main(args):
             # Gradient accumulation for larger batch size
             if (batch_idx+1) % args.acc_steps == 0:
                 optimizer.step()
+                scheduler.step()
                 optimizer.zero_grad()
 
             _, predicted = outputs.max(dim=1)

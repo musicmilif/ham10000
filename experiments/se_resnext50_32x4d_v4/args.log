@@ -1,0 +1,12 @@
+
+data_dir: /disk/HAM10000/
+version: 4
+log_level: INFO
+batch_size: 32
+lr: 0.0001
+backbone: se_resnext50_32x4d
+num_epochs: 10
+load_version: 3
+acc_steps: 4
+loss_weight: [0.9, 0.9, 1.0, 1.0, 1.0, 0.6, 0.8]
+imbalanced_weight: 0.15
