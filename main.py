@@ -23,11 +23,11 @@ from src.utils import (generate_meta,
                        create_confusion_matrix)
 from src.data_utils import HAMDataset, build_train_transform, build_test_transform, build_preprocess
 from modeling.model import HAMNet
-from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint
+from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint, TestTimeAugment
 from modeling.losses import FocalLoss
 
-STATUS_MSG_T = "Batches done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgPrecision: {:.6f}"
-STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgPrecision: {:.6f}"
+STATUS_MSG_T = "Batches done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgFscore: {:.6f}"
+STATUS_MSG_V = "Epochs done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgFscore: {:.6f}"
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -118,7 +118,7 @@ def main(args):
 
         train_loss = AverageMeter()
         train_acc = AverageMeter()
-        train_map = AverageMeter()
+        train_f = AverageMeter()
 
         for batch_idx, (inputs, targets, _) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
@@ -135,57 +135,60 @@ def main(args):
             _, predicted = outputs.max(dim=1)
 
             # Update Metrics
-            from src.metrics import avg_precision
+            from src.metrics import avg_precision, avg_fscore
             train_loss.update(loss.item())
             train_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
-            train_map.update(avg_precision(targets.cpu().detach().numpy(), 
-                                           predicted.cpu().detach().numpy()))
+            train_f.update(avg_fscore(targets.cpu().detach().numpy(), 
+                                      predicted.cpu().detach().numpy()))
 
             if batch_idx % 10 == 9:
                 LOGGER.info(STATUS_MSG_T.format(batch_idx+1,
                                                 n_batches,
                                                 train_loss.avg,
                                                 train_acc.avg,
-                                                train_map.avg))
+                                                train_f.avg))
         # Validation
         val_ids, val_labels, val_preds = [], [], []
         model.eval()
 
         valid_loss = AverageMeter()
         valid_acc = AverageMeter()
-        valid_map = AverageMeter()
+        valid_f = AverageMeter()
 
         with torch.no_grad():
             for batch_idx, (inputs, targets, img_id) in enumerate(valid_loader):
                 inputs, targets = inputs.to(device), targets.type(torch.LongTensor).to(device)
-                outputs = model(inputs)
+
+                # Apply Test Time Augmentation 
+                tta = TestTimeAugment(model, times=args.tta)
+                outputs = tta.predict(inputs)
                 loss = criterion(outputs, targets)
 
                 _, predicted = outputs.max(dim=1)
                 valid_loss.update(loss.item())
                 valid_acc.update(predicted.eq(targets).sum().item()/targets.size(0))
-                valid_map.update(avg_precision(targets.cpu().numpy(), 
-                                               predicted.cpu().numpy()))
+                valid_f.update(avg_precision(targets.cpu().numpy(), 
+                                             predicted.cpu().numpy()))
 
                 val_ids.extend(img_id)
                 val_labels.extend(targets.cpu().numpy())
                 val_preds.extend(np.squeeze(predicted.cpu().numpy().T))
 
         LOGGER.info(STATUS_MSG_V.format(epoch,
-                                        args.num_epochs,
+                                        args.num_epochs+start_epoch,
                                         valid_loss.avg,
                                         valid_acc.avg,
-                                        valid_map.avg))
+                                        valid_f.avg))
 
         # Save checkpoint.
-        if valid_map.avg > best_map:
+        if valid_f.avg > best_map:
             LOGGER.info('Saving..')
-            output_file_name = os.path.join(exp_dir, f'checkpoint_{valid_map.avg:.3f}.ckpt')
+            output_file_name = os.path.join(exp_dir, f'checkpoint_{valid_f.avg:.3f}.ckpt')
             save_checkpoint(path=output_file_name,
                             model=model,
                             epoch=epoch,
                             optimizer=optimizer)
-            best_map = valid_map.avg
+            best_map = valid_f.avg
 
         epochs.append(epoch)
         train_losses.append(train_loss.avg)
@@ -221,6 +224,8 @@ def parse_arguments(argv):
                         nargs='+', type=float, help='weights for loss function')
     parser.add_argument('--imbalanced-weight', default=0.15, type=float, 
                          help='the proportion for the least class instance compare to the most')
+    parser.add_argument('--tta', default=0, type=int, 
+                         help='whether to use test time augmentation or not')
 
     return parser.parse_args(argv)
 
