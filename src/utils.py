@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedShuffleSplit
 
 import matplotlib.pylab as plt
+import seaborn as sns
 
 
 LOG_FORMAT = '%(asctime)-15s %(levelname)-5s %(name)-15s - %(message)s'
@@ -59,31 +60,30 @@ def create_loss_plot(exp_dir, epochs, train_losses, test_losses):
     plt.close()
 
 
-def create_confusion_matrix(exp_dir, cm, classes, normalize=False, cmap=plt.cm.Blues):
+def create_confusion_matrix(exp_dir, cm, classes, normalize=False):
     """Plot confusion matrix on given dataset.
     Args:
-        cm (): 
+        exp_dir (str): experiment folder directory path.
+        cm (np.ndarray): confusion matrix.
+        classes (list): list of name for classes.
+        normalize (bool): normalize the count into percentage.
     """
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title('Confusion matrix')
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    vmin, vmax = cm.min(), cm.max()
 
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = np.round(cm, 2)
+        vmin, vmax = 0, 1
 
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+    plt.figure(figsize=(8, 7))
+    sns.heatmap(cm, annot=True, cmap="Blues", vmin=vmin, vmax=vmax, square=True, 
+                xticklabels=classes, yticklabels=classes)
+    plt.title('Confusion matrix', fontdict={'fontsize': 20})
+    plt.xlabel('Predicted label')
+    plt.ylabel('True label')
 
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    plt.savefig(os.path.join(exp_dir, 'confusion_mtx.png'))
+    plt.savefig(os.path.join(exp_dir, 'confusion_mtx.png'), dpi=120)
     plt.close()
 
 
