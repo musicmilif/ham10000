@@ -1,0 +1,1 @@
+Namespace(backbone='se_resnext50_32x4d', batch_size=32, data_dir='/disk/HAM10000/', load_weight='', log_level='INFO', loss_weight=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], num_epochs=10, version=2)
