@@ -1,0 +1,3 @@
+[submodule "modeling/FishNet"]
+	path = modeling/FishNet
+	url = git@github.com:kevin-ssy/FishNet.git
