@@ -197,7 +197,7 @@ def main(args):
         np.save(loss_file, [train_losses, valid_losses])
         np.save(confusion_file, [val_ids, val_labels, val_preds])
         confusion_mtx = confusion_matrix(val_labels, val_preds)
-        plot_labels = ['akiec', 'bcc', 'bkl', 'df', 'nv', 'vasc','mel']
+        plot_labels = ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
         create_confusion_matrix(exp_dir, confusion_mtx, plot_labels, normalize=True)
 
 
