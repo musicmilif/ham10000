@@ -1,91 +1,90 @@
-# Lesion Diagnosis
+# Peltarion assignment
 
-Automated predictions of disease classification within dermoscopic images.
-
-## Problem Statement
-
-Build and evaluate a deep learning model that classifies a dermoscopic image as one of the following classes:
-
-- [Melanoma](https://dermoscopedia.org/Melanoma)
-- [Melanocytic nevus](https://dermoscopedia.org/Benign_Melanocytic_lesions)
-- [Basal cell carcinoma](https://dermoscopedia.org/Basal_cell_carcinoma)
-- [Actinic keratosis / Bowen’s disease (intraepithelial carcinoma)](https://dermoscopedia.org/Actinic_keratosis_/_Bowen%27s_disease_/_keratoacanthoma_/_squamous_cell_carcinoma)
-- [Benign keratosis (solar lentigo / seborrheic keratosis / lichen planus-like keratosis)](https://dermoscopedia.org/Solar_lentigines_/_seborrheic_keratoses_/_lichen_planus-like_keratosis)
-- [Dermatofibroma](https://dermoscopedia.org/Dermatofibromas)
-- [Vascular lesion](https://dermoscopedia.org/Vascular_lesions) 
-
-## Data
-
-As data, use [HAM10000](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T).
-
-For your convenience we also provide the dataset for easy download via these three links:
-
-* [HAM10000_images_part_1.zip](https://storage.googleapis.com/peltarion-ml-assignment/HAM10000/HAM10000_images_part_1.zip)
-* [HAM10000_images_part_2.zip](https://storage.googleapis.com/peltarion-ml-assignment/HAM10000/HAM10000_images_part_2.zip)
-* [HAM10000_metadata.csv](https://storage.googleapis.com/peltarion-ml-assignment/HAM10000/HAM10000_metadata.csv)
-
-Example images for the different lesion categories:
-![Example images of the different lesion categories.](lesions.png)
-
-## Assignment Details
-
-Feel free to use the existing implementation in this repository as a base, but beware of low code quality and some data scientific problems in this implementation, that you will need to fix. It is perfectly fine to solve the task in a programming language and framework of your own choice instead.
-
-Here are some ideas on what could be interesting things to consider, you won't have time to go deep into all of them, so choose the areas that you find most interesting to implement and investigate. 
-
-* Define and implement metrics suitable for this problem.
-* Try different model architectures / hyper parameter settings and compare their performance.
-* There are much more examples of some of the classes in the data set. How does 
-that impact the way you approach this problem?
-* There are not that many examples to learn from. What alternatives are there to 
-train a good model despite not that much data?
-* Improve the code quality, e.g. by following 
-  [Google Python Style Guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md)
-* You're free to split the dataset however you choose but motivate your decisions. 
-   
-Don't forget to keep track of some of your mishaps as well as the successful 
-experiments. The work test is not about building the perfect classifier - we 
-are more interested in how you approach the problem. 
-
-If you have access to a GPU you are free to use it; alternatively you can use [Google Colab's GPU runtime](https://colab.research.google.com/), which is currently free of charge.
-Make sure to save locally all of the output you will need to prepare the report (in case of Colab, local storage is not persistent).
-
-## Deliverables 
-
-Git commit your results to this repo when you're done with the assignment.
-Also create a report describing your work and results.
-Make sure to include descriptions on what you have done, including your modeling
-choices, results, conclusions and visualizations.
-Notebooks can be a good way to show and visualize your work and results, but
-you are free to use alternative solutions. 
-
-Zip up the repo and send us the file in an e-mail to ml-team@peltarion.com.
-
-If your solution is good you will be invited to Peltarion’s office to present your work for the ML team and have a follow-up discussion.
-
-## Questions
-
-If you run into problems or have questions, don't hesitate to email ml-team@peltarion.com. Asking questions is a good thing.
-
-## Appendix - If you want to use Colab for model training
-After navigating to [Colab](https://colab.research.google.com/), start a new Python 3 notebook. In the Runtime menu, select Change runtime type and choose GPU as Hardware accelerator.
-
-You can then run the following list of commands to download the data.
-
-```bash
-!wget https://storage.googleapis.com/peltarion-ml-assignment/HAM10000/HAM10000_images_part_1.zip
-!wget https://storage.googleapis.com/peltarion-ml-assignment/HAM10000/HAM10000_images_part_2.zip
-!wget https://storage.googleapis.com/peltarion-ml-assignment/HAM10000/HAM10000_metadata.csv
-!unzip -qq HAM10000_images_part_1.zip -d data
-!unzip -qq HAM10000_images_part_2.zip -d data
-!mv HAM10000_metadata.csv data/
-
+## Environments
+```
+Ubuntu 16.04.6 LTS
+CUDA Version 10.1
+Python 3.6.5
 ```
 
-Once you have uploaded the code in the zip file to your Colab notebook environment you can use
-
+## Quick Start
 ```bash
-!python main.py
+git clone git@github.com:musicmilif/peltarion.git
+cd peltarion
+virtualenv -p python3 .env
+source .env/bin/activate
+pip install -r requirments.txt
+
+python main.py --backbone se_resnext50_34x4d
 ```
 
-to run the training loop.
+## Exploratory Data Analysis (EDA)
+ - To understand more about the HAM10000 dataset and the prediction made from model check out the following jupyter notebook:
+     - EDA.ipynb
+     - post_EDA.ipynb
+
+
+## Preprocessing
+ - Train-Valid spliting
+     - At first, I thought it might be more reasonable to split the data by `lesion_id`. But if the input of the model didn't have personal information, it won't be necessary to split on `lesion_id`. I believe there won't be data leakage.
+     - Due to the imbalanced data, I chose **stratified train test spliting** with fixed random seed. 
+ - Imbalanced data
+     - **Oversample** on the minority classes, up to `args.imbalanced_weight` percent of the number of data in majority class. In my case, given $N_{nv}$ is the number of data in training, the other classes will oversample to at least $0.15N_{nv}$ samples.
+     - Use [WeightedRandomSampler](https://pytorch.org/docs/stable/data.html#torch.utils.data.WeightedRandomSampler) from pytorch, but it spent too much time on sampling, so I removed it.
+ - Data augmentation
+     - For data augmentation, I use package: [albumentations](https://github.com/albu/albumentations) to perform. At the beginning I chose 4 augmentations: `HorizontalFlip`, `VerticalFlip`, `ShiftScaleRotate` and  `RandomBrightnessContrast`.
+     - The reason why chose this 4 augmentaion is based on **EDA** (for more detail check EDA.ipynb), and after verifying by training the resnet18. I removed `RandomBrightnessContrast` after `resnet18 ver2`, because this will slow down the weight convergance.
+
+## Performance Measurement
+ - Training objective function
+     - Weighted Cross Entropy Loss
+     - **Weighted Focal Loss**
+ - Evaluation Metrics
+     - Accuracy
+     - Average Precision
+     - **Average F-measure**
+
+1. Since the imbalanced data issue, I add weights on each loss function. In my case was [1.0, 0.9, 0.9, 1.0, 1.0, 0.5, 0.7] corresponding to classes ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc'], this weight was determined by the observation on confusion matrix.
+2. Weighted Cross Entropy loss significantly improved the average precision in validation data. After changing cross entropy loss to focal loss doesn't improve a lot.
+3. Due to imbalanced, accuracy can't really shows the performance of the model. At first, I chose precision as my metrics, but I can't tell precision or recall is more importance on this case, so I use **Average F-measure**.
+
+
+## Model Training
+To train the deep learning model, I use [pretrainedmodels](https://github.com/Cadene/pretrained-models.pytorch) to load the **imagenet** weights as my initial weight. For more detail, please check the README.md in the `experiment` folder.
+
+- Resnet18:
+    - Chose a light weighted model to quick verify **learning rate** and **batch size**.
+    - Found a bug in torchvision models, I got different result from `model.train()` and `model.eval()` even if the inputs are the same. Not sure what cased this bug, I will use **MINST** dataset to verify this problem. My preliminary guess is torch 1.2.0 haven't fully support CUDA 10.1
+ - SE-ResneXt50 (34x4d):
+     - Se-ResneXt50 (34x4d) is [the state of the art CNN architecture on Imagenet](https://arxiv.org/pdf/1810.00736.pdf) in small model size. This model is perfect match with my GPU (since GTX 1080Ti only got 11 GB memory).
+     - By the experience of resnet18, 128 batch size will have stable training loss curve. But my graphic card memory can only handel 32 batch size. So I added **accumulation gradient** to delay the gradient update.
+     - Add **Test Time Augmentation**(TTA) to improve the performance on Validation data
+
+ - SE-Resnet50:
+     - Train a similar architecture with SE-ResneXt50 (34x4d) to compare with it. (All argument are equal to SE-ResneXt50(34x4d) except train SE-Resnet50 with 20 epoches)
+
+|                        | Focal Loss | Accuracy | Avg Fsocre |
+|------------------------|------------|----------|------------|
+| SE-ResneXt50 (32x4d)   |  7.4301  | 0.8612 | 0.5737   |
+| SE-Resnet50            | 15.2528  | 0.8312 | 0.5197  |
+
+
+## Future Work
+ - Train an **Supervised AutoEncoder** or use [Data Shaply](https://arxiv.org/abs/1904.02868) to detect mislabel (low quality) images.
+ - Use **Cyclic learning rate** to ensemble (blending) models.
+ - Check the bug from torchvision pretrained model. Using MNIST official example to test.
+ - Train with other SoTA model (FishNet, EfficientNet, ...)
+
+## Conclusion
+1. To handle with imbalanced data, oversampling and weighted loss can solve the problem properly. But the performance of Focal loss was not significant.
+2. Some wrong predicted images are hard to tell it's mislabel or weak performance of the model. It's necessary to use Data Shaply to check the quality of data.
+3. Two models' performance (SE-ResneXt50 (34x4d) and SE-Resnet50) on HAM10000 dataset is consistant with Imagenet dataset.
+
+
+## References
+1. [albumentations](https://github.com/albu/albumentations)
+2. [pretrainedmodels](https://github.com/Cadene/pretrained-models.pytorch)
+3. [Landmark2019-1st-and-3rd-Place-Solution](https://github.com/lyakaap/Landmark2019-1st-and-3rd-Place-Solution)
+4. [HAM10000 Dataset](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T)
+5. [Benchmark Analysis of Representative
+Deep Neural Network Architectures](https://arxiv.org/pdf/1810.00736.pdf)
