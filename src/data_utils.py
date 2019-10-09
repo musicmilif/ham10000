@@ -15,7 +15,7 @@ def get_image(img_path):
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    return img / 255.
+    return img / 255.0
 
 
 class HAMDataset(Dataset):
@@ -23,29 +23,29 @@ class HAMDataset(Dataset):
         self.df = df
         self.preprocess = preprocess
         self.transforms = transforms
-    
+
     def __getitem__(self, idx):
-        img_path = self.df['path'].iloc[idx]
-        y = self.df['target'].iloc[idx]
-        id_ = self.df['image_id'].iloc[idx]
+        img_path = self.df["path"].iloc[idx]
+        y = self.df["target"].iloc[idx]
+        id_ = self.df["image_id"].iloc[idx]
         img = get_image(img_path)
 
         if self.preprocess:
             pre_process = self.preprocess(image=img)
-            img = pre_process['image']
+            img = pre_process["image"]
 
         if self.transforms:
             augment = self.transforms(image=img)
-            img = augment['image']
+            img = augment["image"]
 
         return img, y, id_
-    
+
     def __len__(self):
         return len(self.df)
 
 
 def to_tensor(x, **kwargs):
-    return x.transpose(2,0,1).astype('float32')
+    return x.transpose(2, 0, 1).astype("float32")
 
 
 def build_train_transform(size=244):
@@ -55,11 +55,11 @@ def build_train_transform(size=244):
     """
     _transform = [
         albu.Resize(size, size),
-        albu.HorizontalFlip(p=.5), 
-        albu.VerticalFlip(p=.5), 
-        albu.ShiftScaleRotate(p=.5),
+        albu.HorizontalFlip(p=0.5),
+        albu.VerticalFlip(p=0.5),
+        albu.ShiftScaleRotate(p=0.5),
         albu.Lambda(image=to_tensor),
-        ]
+    ]
 
     return albu.Compose(_transform)
 
@@ -69,10 +69,7 @@ def build_test_transform(size=244):
     Arg:
         size (int): the output size for images (3, size, size).
     """
-    _transform = [
-        albu.Resize(size, size),
-        albu.Lambda(image=to_tensor),
-        ]
+    _transform = [albu.Resize(size, size), albu.Lambda(image=to_tensor)]
 
     return albu.Compose(_transform)
 
@@ -83,10 +80,6 @@ def build_preprocess(mean, std):
         mean (list): The mean of RGB channel for pre-train weight.
         std (list): The std of RGB channel for pre-train weight.
     """
-    _transform = [
-        albu.Normalize(mean, std),
-    ]
+    _transform = [albu.Normalize(mean, std)]
 
     return albu.Compose(_transform)
-
-

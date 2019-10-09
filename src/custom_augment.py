@@ -6,7 +6,7 @@ from .auto_augmentation import ImageNetPolicy, SVHNPolicy, CIFAR10Policy
 from albumentations import ImageOnlyTransform
 import albumentations.augmentations.functional as F
 
-__all__ = ['AutoAugmentWrapper', 'RandomCropThenScaleToOriginalSize']
+__all__ = ["AutoAugmentWrapper", "RandomCropThenScaleToOriginalSize"]
 
 
 class AutoAugmentWrapper(ImageOnlyTransform):

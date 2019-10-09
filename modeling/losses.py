@@ -11,7 +11,7 @@ def _one_hot(index, classes):
 
     mask = torch.Tensor(*size).fill_(0)
     index = index.view(*view)
-    ones = 1.
+    ones = 1.0
 
     if isinstance(index, Variable):
         ones = Variable(torch.Tensor(index.size()).fill_(1))
@@ -36,9 +36,9 @@ class FocalLoss(nn.Module):
 
         y = _one_hot(target, input.size(-1))
         logit = F.softmax(input, dim=-1)
-        logit = logit.clamp(self.eps, 1. - self.eps)
-        
-        loss = -1*y*torch.log(logit)
-        loss = self.weight*loss*(1-logit)**self.gamma
+        logit = logit.clamp(self.eps, 1.0 - self.eps)
+
+        loss = -1 * y * torch.log(logit)
+        loss = self.weight * loss * (1 - logit) ** self.gamma
 
         return loss.sum()

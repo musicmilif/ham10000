@@ -24,10 +24,10 @@ class AverageMeter(object):
 
 def remove_redundant_keys(state_dict: OrderedDict):
     # remove DataParallel wrapping
-    if 'module' in list(state_dict.keys())[0]:
+    if "module" in list(state_dict.keys())[0]:
         new_state_dict = OrderedDict()
         for k, v in state_dict.items():
-            if k.startswith('module.'):
+            if k.startswith("module."):
                 # str.replace() can't be used because of unintended key removal (e.g. se-module)
                 new_state_dict[k[7:]] = v
     else:
@@ -38,22 +38,24 @@ def remove_redundant_keys(state_dict: OrderedDict):
 
 def save_checkpoint(path, model, epoch, optimizer=None, save_arch=False, params=None):
     attributes = {
-        'epoch': epoch,
-        'state_dict': remove_redundant_keys(model.state_dict()),
+        "epoch": epoch,
+        "state_dict": remove_redundant_keys(model.state_dict()),
     }
     if optimizer is not None:
-        attributes['optimizer'] = optimizer.state_dict()
+        attributes["optimizer"] = optimizer.state_dict()
     if save_arch:
-        attributes['arch'] = model
+        attributes["arch"] = model
     if params is not None:
-        attributes['params'] = params
+        attributes["params"] = params
 
     try:
         torch.save(attributes, path)
     except TypeError:
-        if 'arch' in attributes:
-            print('Model architecture will be ignored because the architecture includes non-pickable objects.')
-            del attributes['arch']
+        if "arch" in attributes:
+            print(
+                "Model architecture will be ignored because the architecture includes non-pickable objects."
+            )
+            del attributes["arch"]
             torch.save(attributes, path)
 
 
@@ -63,19 +65,19 @@ def load_checkpoint(path, model=None, optimizer=None, params=False, epoch=False)
 
     if model is not None:
         if isinstance(model, nn.DataParallel):
-            model.module.load_state_dict(remove_redundant_keys(resume['state_dict']))
+            model.module.load_state_dict(remove_redundant_keys(resume["state_dict"]))
         else:
-            model.load_state_dict(remove_redundant_keys(resume['state_dict']))
+            model.load_state_dict(remove_redundant_keys(resume["state_dict"]))
 
-        rets['model'] = model
+        rets["model"] = model
 
     if optimizer is not None:
-        optimizer.load_state_dict(resume['optimizer'])
-        rets['optimizer'] = optimizer
+        optimizer.load_state_dict(resume["optimizer"])
+        rets["optimizer"] = optimizer
     if params:
-        rets['params'] = resume['params']
+        rets["params"] = resume["params"]
     if epoch:
-        rets['epoch'] = resume['epoch']
+        rets["epoch"] = resume["epoch"]
 
     return rets
 
@@ -84,12 +86,14 @@ class TestTimeAugment(object):
     def __init__(self, model, times=4):
         self.model = model
         self.times = times
-        self.augment = albu.Compose([
-            albu.HorizontalFlip(p=.5), 
-            albu.VerticalFlip(p=.5), 
-            albu.ShiftScaleRotate(p=.9)
-            ])
-    
+        self.augment = albu.Compose(
+            [
+                albu.HorizontalFlip(p=0.5),
+                albu.VerticalFlip(p=0.5),
+                albu.ShiftScaleRotate(p=0.9),
+            ]
+        )
+
     def predict(self, inputs):
         device, dtype = inputs.device, inputs.dtype
         batch_size = inputs.size(0)
@@ -99,10 +103,10 @@ class TestTimeAugment(object):
             images = np.zeros(shape=inputs.size())
             for i in range(batch_size):
                 img = inputs[i].cpu().numpy().transpose(1, 2, 0)
-                img = self.augment(image=img)['image']
-                images[i] = img.transpose(2, 0, 1)  
+                img = self.augment(image=img)["image"]
+                images[i] = img.transpose(2, 0, 1)
 
             images = torch.from_numpy(images).to(device).to(dtype)
             outputs += self.model(images)
-        
-        return outputs / (self.times+1)
+
+        return outputs / (self.times + 1)
