@@ -24,19 +24,9 @@ from src.utils import (
     setup_logging,
     create_confusion_matrix,
 )
-from src.data_utils import (
-    HAMDataset,
-    build_train_transform,
-    build_test_transform,
-    build_preprocess,
-)
+from src.data_utils import HAMDataset, build_train_transform, build_test_transform, build_preprocess
 from modeling.model import HAMNet
-from modeling.utils import (
-    AverageMeter,
-    save_checkpoint,
-    load_checkpoint,
-    TestTimeAugment,
-)
+from modeling.utils import AverageMeter, save_checkpoint, load_checkpoint, TestTimeAugment
 from modeling.losses import FocalLoss
 
 STATUS_MSG_T = "Batches done: {}/{} | Loss: {:6f} | Accuracy: {:6f} | AvgFscore: {:.6f}"
@@ -104,21 +94,13 @@ def main(args):
     start_epoch = 1
     if args.load_version:
         # Find the weight corresponding to the best score
-        weight_folder = os.path.join(
-            "experiments", f"{args.backbone}_v{args.load_version}"
-        )
+        weight_folder = os.path.join("experiments", f"{args.backbone}_v{args.load_version}")
         weights = [w for w in glob(f"{weight_folder}/*.ckpt")]
         best_idx = np.argmax([w.split("/")[-1] for w in weights])
         best_weight = weights[best_idx]
 
-        ckpt = load_checkpoint(
-            path=best_weight, model=model, optimizer=optimizer, epoch=True
-        )
-        model, optimizer, start_epoch = (
-            ckpt["model"],
-            ckpt["optimizer"],
-            ckpt["epoch"] + 1,
-        )
+        ckpt = load_checkpoint(path=best_weight, model=model, optimizer=optimizer, epoch=True)
+        model, optimizer, start_epoch = (ckpt["model"], ckpt["optimizer"], ckpt["epoch"] + 1)
         model = model.to(device)
 
     best_map = 0
@@ -134,10 +116,7 @@ def main(args):
         train_f = AverageMeter()
 
         for batch_idx, (inputs, targets, _) in enumerate(train_loader):
-            inputs, targets = (
-                inputs.to(device),
-                targets.type(torch.LongTensor).to(device),
-            )
+            inputs, targets = (inputs.to(device), targets.type(torch.LongTensor).to(device))
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
@@ -156,19 +135,13 @@ def main(args):
             train_loss.update(loss.item())
             train_acc.update(predicted.eq(targets).sum().item() / targets.size(0))
             train_f.update(
-                avg_fscore(
-                    targets.cpu().detach().numpy(), predicted.cpu().detach().numpy()
-                )
+                avg_fscore(targets.cpu().detach().numpy(), predicted.cpu().detach().numpy())
             )
 
             if batch_idx % 10 == 9:
                 LOGGER.info(
                     STATUS_MSG_T.format(
-                        batch_idx + 1,
-                        n_batches,
-                        train_loss.avg,
-                        train_acc.avg,
-                        train_f.avg,
+                        batch_idx + 1, n_batches, train_loss.avg, train_acc.avg, train_f.avg
                     )
                 )
         # Validation
@@ -181,10 +154,7 @@ def main(args):
 
         with torch.no_grad():
             for batch_idx, (inputs, targets, img_id) in enumerate(valid_loader):
-                inputs, targets = (
-                    inputs.to(device),
-                    targets.type(torch.LongTensor).to(device),
-                )
+                inputs, targets = (inputs.to(device), targets.type(torch.LongTensor).to(device))
 
                 # Apply Test Time Augmentation
                 tta = TestTimeAugment(model, times=args.tta)
@@ -194,9 +164,7 @@ def main(args):
                 _, predicted = outputs.max(dim=1)
                 valid_loss.update(loss.item())
                 valid_acc.update(predicted.eq(targets).sum().item() / targets.size(0))
-                valid_f.update(
-                    avg_precision(targets.cpu().numpy(), predicted.cpu().numpy())
-                )
+                valid_f.update(avg_precision(targets.cpu().numpy(), predicted.cpu().numpy()))
 
                 val_ids.extend(img_id)
                 val_labels.extend(targets.cpu().numpy())
@@ -204,23 +172,15 @@ def main(args):
 
         LOGGER.info(
             STATUS_MSG_V.format(
-                epoch,
-                args.num_epochs + start_epoch,
-                valid_loss.avg,
-                valid_acc.avg,
-                valid_f.avg,
+                epoch, args.num_epochs + start_epoch, valid_loss.avg, valid_acc.avg, valid_f.avg
             )
         )
 
         # Save checkpoint.
         if valid_f.avg > best_map:
             LOGGER.info("Saving..")
-            output_file_name = os.path.join(
-                exp_dir, f"checkpoint_{valid_f.avg:.3f}.ckpt"
-            )
-            save_checkpoint(
-                path=output_file_name, model=model, epoch=epoch, optimizer=optimizer
-            )
+            output_file_name = os.path.join(exp_dir, f"checkpoint_{valid_f.avg:.3f}.ckpt")
+            save_checkpoint(path=output_file_name, model=model, epoch=epoch, optimizer=optimizer)
             best_map = valid_f.avg
 
         epochs.append(epoch)
@@ -235,37 +195,22 @@ def main(args):
 
 
 def parse_arguments(argv):
-    parser = argparse.ArgumentParser(
-        description="PyTorch classifier on HAM10000 dataset"
-    )
+    parser = argparse.ArgumentParser(description="PyTorch classifier on HAM10000 dataset")
     parser.add_argument("--data-dir", default="/disk/HAM10000/", help="path to data")
     parser.add_argument("--version", default=1, type=int, help="version of experiment")
     parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO"],
-        help="log-level to use",
+        "--log-level", default="INFO", choices=["DEBUG", "INFO"], help="log-level to use"
     )
     parser.add_argument("--batch-size", default=64, type=int, help="batch-size to use")
     parser.add_argument("--lr", default=1e-3, type=float, help="learning rate to use")
     parser.add_argument(
-        "--backbone",
-        default="resnet18",
-        choices=model_names,
-        help="network architecture",
+        "--backbone", default="resnet18", choices=model_names, help="network architecture"
     )
+    parser.add_argument("--num-epochs", default=10, type=int, help="Number of training epochs")
     parser.add_argument(
-        "--num-epochs", default=10, type=int, help="Number of training epochs"
+        "--load-version", default=0, type=int, help="load previous version of pre-trained weight"
     )
-    parser.add_argument(
-        "--load-version",
-        default=0,
-        type=int,
-        help="load previous version of pre-trained weight",
-    )
-    parser.add_argument(
-        "--acc-steps", default=1, type=int, help="steps for accumulation gradient"
-    )
+    parser.add_argument("--acc-steps", default=1, type=int, help="steps for accumulation gradient")
     parser.add_argument(
         "--loss-weight",
         default=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
@@ -280,10 +225,7 @@ def parse_arguments(argv):
         help="the proportion for the least class instance compare to the most",
     )
     parser.add_argument(
-        "--tta",
-        default=0,
-        type=int,
-        help="whether to use test time augmentation or not",
+        "--tta", default=0, type=int, help="whether to use test time augmentation or not"
     )
 
     return parser.parse_args(argv)

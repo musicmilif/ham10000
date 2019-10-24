@@ -37,10 +37,7 @@ def remove_redundant_keys(state_dict: OrderedDict):
 
 
 def save_checkpoint(path, model, epoch, optimizer=None, save_arch=False, params=None):
-    attributes = {
-        "epoch": epoch,
-        "state_dict": remove_redundant_keys(model.state_dict()),
-    }
+    attributes = {"epoch": epoch, "state_dict": remove_redundant_keys(model.state_dict())}
     if optimizer is not None:
         attributes["optimizer"] = optimizer.state_dict()
     if save_arch:
@@ -87,11 +84,7 @@ class TestTimeAugment(object):
         self.model = model
         self.times = times
         self.augment = albu.Compose(
-            [
-                albu.HorizontalFlip(p=0.5),
-                albu.VerticalFlip(p=0.5),
-                albu.ShiftScaleRotate(p=0.9),
-            ]
+            [albu.HorizontalFlip(p=0.5), albu.VerticalFlip(p=0.5), albu.ShiftScaleRotate(p=0.9)]
         )
 
     def predict(self, inputs):

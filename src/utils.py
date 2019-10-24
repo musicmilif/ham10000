@@ -139,9 +139,7 @@ def over_sample(df: pd.DataFrame, sample_prop, frac=0.3, imbalance=True):
     """
     if imbalance:
         weights = df["target"].value_counts()
-        weights = (
-            (weights.max() / weights * sample_prop).apply(int).sort_index().to_list()
-        )
+        weights = (weights.max() / weights * sample_prop).apply(int).sort_index().to_list()
 
         for cat in range(len(weights)):
             df = pd.concat([df] + [df.loc[df["target"] == cat]] * weights[cat], axis=0)
