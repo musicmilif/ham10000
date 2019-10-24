@@ -1,4 +1,4 @@
-# Peltarion assignment
+# Personal project for Skin Cancer MNIST:HAM10000
 
 ## Environments
 ```
